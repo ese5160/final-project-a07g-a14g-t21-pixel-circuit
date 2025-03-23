@@ -6,7 +6,6 @@
 * GitHub Repository URL: https://github.com/ese5160/final-project-a07g-a14g-t21-pixel-circuit.git
 * Description of test hardware: (development boards, sensors, actuators, laptop + OS, etc) laptop
 
-
 ## 3. Debug Logger Module
 
 ![3](image-2.png)
