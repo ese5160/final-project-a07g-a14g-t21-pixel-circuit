@@ -151,8 +151,28 @@ void setLogLevel(enum eDebugLogLevels debugLevel)
  */
 void LogMessage(enum eDebugLogLevels level, const char *format, ...)
 {
-    // Todo: Implement Debug Logger
-	// More detailed descriptions are in header file
+    // ToDo: Complete this function 
+    // If logging is disabled or the requested level is below the current global level, return
+    if ((level < currentDebugLevel) || (currentDebugLevel == LOG_OFF_LVL))
+    {
+	    return;
+    }
+
+    // Prepare a buffer to hold the formatted string
+    char buffer[128];
+
+    // Set up a variable argument list
+    va_list args;
+    va_start(args, format);
+
+    // Safely print the variable arguments into the buffer
+    vsnprintf(buffer, sizeof(buffer), format, args);
+
+    // Clean up
+    va_end(args);
+
+    // Finally, send the formatted string to the serial console
+    SerialConsoleWriteString(buffer);
 }
 
 /*
@@ -221,6 +241,11 @@ static void configure_usart_callbacks(void)
 void usart_read_callback(struct usart_module *const usart_module)
 {
 	// ToDo: Complete this function 
+	// 1. Place the just-received character into the RX ring buffer
+    circular_buf_put(cbufRx, (uint8_t)latestRx);
+
+    // 2. Restart the async read so we continue to get subsequent characters
+    usart_read_buffer_job(&usart_instance, (uint8_t *)&latestRx, 1);
 }
 
 /**************************************************************************/ 
