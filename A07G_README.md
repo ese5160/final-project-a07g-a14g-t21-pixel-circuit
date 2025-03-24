@@ -330,3 +330,5 @@ I have update to github.
 ## 6. Add CLI commands
 
 I have update to github.
+
+link: https://youtu.be/flEjbNyZUMg
