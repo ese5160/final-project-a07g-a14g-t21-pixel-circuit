@@ -321,4 +321,4 @@ Triggering: Often set to “None” or “Continuous” unless you’re hunting 
 
 ![4.3.1](image.png)
 
-![4.3.2](image-1.png)
+![4.3.2](image-3.png)
