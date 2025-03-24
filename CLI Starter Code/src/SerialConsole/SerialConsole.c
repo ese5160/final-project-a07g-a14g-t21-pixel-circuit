@@ -241,10 +241,15 @@ static void configure_usart_callbacks(void)
 void usart_read_callback(struct usart_module *const usart_module)
 {
 	// ToDo: Complete this function 
-	// 1. Place the just-received character into the RX ring buffer
+    // 1. Put received character into the ring buffer
     circular_buf_put(cbufRx, (uint8_t)latestRx);
 
-    // 2. Restart the async read so we continue to get subsequent characters
+    // 2. Give the semaphore from ISR to wake the CLI task
+    BaseType_t xHigherPriorityTaskWoken = pdFALSE;
+    xSemaphoreGiveFromISR(xRxSemaphore, &xHigherPriorityTaskWoken);
+    portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
+
+    // 3. Re-initiate the read job to capture the next character
     usart_read_buffer_job(&usart_instance, (uint8_t *)&latestRx, 1);
 }
 

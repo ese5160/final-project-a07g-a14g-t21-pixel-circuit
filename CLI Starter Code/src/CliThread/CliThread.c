@@ -14,10 +14,13 @@
 /******************************************************************************
  * Defines
  ******************************************************************************/
-
+#define FIRMWARE_VERSION  "0.0.1"
 /******************************************************************************
  * Variables
  ******************************************************************************/
+BaseType_t CLI_VersionCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
+BaseType_t CLI_TicksCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString);
+
 static int8_t *const pcWelcomeMessage =
     "FreeRTOS CLI.\r\nType Help to view a list of registered commands.\r\n";
 
@@ -35,6 +38,28 @@ static const CLI_Command_Definition_t xResetCommand =
         "reset: Resets the device\r\n",
         (const pdCOMMAND_LINE_CALLBACK)CLI_ResetDevice,
         0};
+		
+/**
+ * @brief CLI command definition for the "version" command.
+ */
+static const CLI_Command_Definition_t xVersionCommand =
+{
+    "version",            // Command string to type in the terminal
+    "version:\r\n  Prints the firmware version.\r\n",  // Help text
+    (pdCOMMAND_LINE_CALLBACK)CLI_VersionCommand,       // Callback function
+    0 // number of parameters
+};
+
+/**
+ * @brief CLI command definition for the "ticks" command.
+ */
+static const CLI_Command_Definition_t xTicksCommand =
+{
+    "ticks",
+    "ticks:\r\n  Prints the RTOS tick count.\r\n",
+    (pdCOMMAND_LINE_CALLBACK)CLI_TicksCommand,
+    0
+};
 
 /******************************************************************************
  * Forward Declarations
@@ -54,7 +79,11 @@ void vCommandConsoleTask(void *pvParameters)
 
     FreeRTOS_CLIRegisterCommand(&xClearScreen);
     FreeRTOS_CLIRegisterCommand(&xResetCommand);
-
+	
+    // NEW commands
+    FreeRTOS_CLIRegisterCommand(&xVersionCommand);
+    FreeRTOS_CLIRegisterCommand(&xTicksCommand);
+	
     uint8_t cRxedChar[2], cInputIndex = 0;
     BaseType_t xMoreDataToFollow;
     /* The input and output buffers are declared static to keep them off the stack. */
@@ -217,7 +246,17 @@ void vCommandConsoleTask(void *pvParameters)
 static void FreeRTOS_read(char *character)
 {
     // ToDo: Complete this function
-    vTaskSuspend(NULL); // We suspend ourselves. Please remove this when doing your code
+    // Wait until xRxSemaphore is given by the ISR
+    xSemaphoreTake(xRxSemaphore, portMAX_DELAY);
+
+    // By this point, there's at least one character in the ring buffer.
+    // Attempt to retrieve it:
+    while (SerialConsoleReadCharacter((uint8_t *)character) == -1)
+    {
+	    // If for some reason the buffer was empty,
+	    // wait a moment and try again
+	    vTaskDelay(pdMS_TO_TICKS(1));
+    }
 }
 
 /******************************************************************************
@@ -240,5 +279,34 @@ BaseType_t xCliClearTerminalScreen(char *pcWriteBuffer, size_t xWriteBufferLen, 
 BaseType_t CLI_ResetDevice(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString)
 {
     system_reset();
+    return pdFALSE;
+}
+
+/**
+ * @brief Command to print the firmware version string.
+ */
+BaseType_t CLI_VersionCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString)
+{
+    // We already defined: #define FIRMWARE_VERSION "0.0.1"
+    // Print that to the provided buffer
+    snprintf((char *)pcWriteBuffer, xWriteBufferLen,
+             "Firmware version: %s\r\n", FIRMWARE_VERSION);
+
+    // Return pdFALSE to signal we're done outputting
+    return pdFALSE;
+}
+
+/**
+ * @brief Command to print the current RTOS tick count (time since scheduler started).
+ */
+BaseType_t CLI_TicksCommand(int8_t *pcWriteBuffer, size_t xWriteBufferLen, const int8_t *pcCommandString)
+{
+    // Get the current RTOS tick count
+    TickType_t currentTicks = xTaskGetTickCount();
+
+    // Format the output
+    snprintf((char *)pcWriteBuffer, xWriteBufferLen,
+             "Ticks since scheduler start: %lu\r\n", (unsigned long)currentTicks);
+
     return pdFALSE;
 }

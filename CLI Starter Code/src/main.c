@@ -49,6 +49,8 @@
 /******************************************************************************
  * Variables
  ******************************************************************************/
+SemaphoreHandle_t xRxSemaphore = NULL;
+
 static char bufferPrint[64];			  ///< Buffer for daemon task
 static TaskHandle_t cliTaskHandle = NULL; //!< CLI task handle
 
@@ -128,6 +130,11 @@ void vApplicationDaemonTaskStartupHook(void *ucParameterToPass) // vApplicationD
 	// CODE HERE: Initialize any HW here
 
 	// Initialize tasks
+    xRxSemaphore = xSemaphoreCreateBinary();
+    if (xRxSemaphore == NULL)
+    {
+	    // handle error
+    }
 	StartTasks();
 }
 

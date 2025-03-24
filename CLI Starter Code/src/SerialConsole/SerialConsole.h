@@ -33,6 +33,7 @@
  #include <string.h>
  #include <stdarg.h>
  #include "circular_buffer.h"
+ #include "semphr.h"
  
  /******************************************************************************
   * Enumerations
@@ -120,6 +121,7 @@ void setLogLevel(enum eDebugLogLevels debugLevel);
  *****************************************************************************/
 enum eDebugLogLevels getLogLevel(void);
 
+extern SemaphoreHandle_t xRxSemaphore;
 
 /******************************************************************************
 * Local Functions
